@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Melody – Feel the Music, Live the Moment</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Font Awesome 6 for Crisp Music & UI Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          colors: {
+            melody: {
+              black: '#0a0a0c',
+              surface: '#12101a',
+              purple: '#181226',
+              purpleLight: '#24193c',
+              neon: '#1ed760',
+              neonBright: '#00ff88',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar & Global Polish */
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background-color: #0a0a0c;
+      color: #f8fafc;
+    }
+
+    body {
+      overflow-x: hidden;
+      background: radial-gradient(circle at 18% 0%, #24193c 0%, #120e1c 38%, #0a0a0c 85%);
+      min-height: 100vh;
+    }
+
+    /* Sleek dark scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0a0a0c;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #24193c;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #1ed760;
+    }
+
+    /* Neon Glow Utilities */
+    .neon-glow {
+      box-shadow: 0 0 22px rgba(30, 215, 96, 0.35);
+    }
+    .neon-glow-sm {
+      box-shadow: 0 0 14px rgba(0, 255, 136, 0.25);
+    }
+    .card-hover {
+      transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.25s ease, box-shadow 0.28s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.55), 0 0 18px rgba(30, 215, 96, 0.14);
+    }
+
+    /* Equalizer Bars Animation for Currently Playing Track */
+    @keyframes eqBounce {
+      0%, 100% { height: 4px; }
+      50% { height: 16px; }
+    }
+    .eq-bar {
+      width: 3px;
+      background-color: #00ff88;
+      border-radius: 2px;
+      animation: eqBounce 0.8s ease-in-out infinite;
+    }
+    .eq-bar:nth-child(2) { animation-delay: 0.2s; }
+    .eq-bar:nth-child(3) { animation-delay: 0.4s; }
+    .eq-paused .eq-bar {
+      animation-play-state: paused;
+      height: 5px;
+    }
+
+    /* Custom Range Slider Styling (Progress & Volume) */
+    input[type="range"].melody-range {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+    input[type="range"].melody-range::-webkit-slider-runnable-track {
+      height: 5px;
+      border-radius: 999px;
+    }
+    input[type="range"].melody-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: #00ff88;
+      margin-top: -4px;
+      box-shadow: 0 0 10px rgba(0, 255, 136, 0.8);
+      transition: transform 0.15s ease;
+    }
+    input[type="range"].melody-range:hover::-webkit-slider-thumb {
+      transform: scale(1.25);
+    }
+  </style>
+</head>
+<body class="font-sans antialiased selection:bg-melody-neon selection:text-melody-black pb-32 md:pb-28">
+
+  <!-- Toast Notification Banner (Replaces alert()) -->
+  <div id="toast-container" class="fixed top-5 right-5 z-[70] flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Mobile Sidebar Backdrop -->
+  <div id="sidebar-backdrop" onclick="toggleMobileSidebar(false)" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 hidden lg:hidden transition-opacity"></div>
+
+  <!-- ==================== LEFT SIDEBAR NAVIGATION ==================== -->
+  <aside id="sidebar" class="fixed top-0 left-0 bottom-24 lg:bottom-24 w-64 bg-[#0d0b14]/95 backdrop-blur-xl border-r border-white/10 z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-out flex flex-col justify-between">
+    <div class="p-5 overflow-y-auto">
+      <!-- Brand Logo -->
+      <div class="flex items-center justify-between mb-8">
+        <a href="#home" onclick="navigateTo('home', event)" class="flex items-center gap-3 group">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-melody-neon to-melody-neonBright flex items-center justify-center text-melody-black shadow-lg neon-glow group-hover:scale-105 transition-transform">
+            <i class="fa-solid fa-wave-square text-lg font-bold"></i>
+          </div>
+          <div>
+            <span class="font-display font-extrabold text-2xl tracking-tight bg-gradient-to-r from-white via-white to-melody-neonBright bg-clip-text text-transparent">Melody</span>
+            <span class="block text-[10px] uppercase tracking-widest text-melody-neon font-semibold -mt-1">Hi-Fi Stream</span>
+          </div>
+        </a>
+        <!-- Mobile Close Button -->
+        <button onclick="toggleMobileSidebar(false)" aria-label="Close Menu" class="lg:hidden p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Primary Navigation -->
+      <div class="mb-6">
+        <p class="px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-2">Menu</p>
+        <nav class="space-y-1" id="sidebar-nav">
+          <a href="#home" data-nav="home" onclick="navigateTo('home', event)" class="nav-item active flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-sm font-medium bg-melody-purpleLight text-melody-neonBright border border-melody-neon/30 transition-all">
+            <i class="fa-solid fa-house w-5 text-center"></i>
+            <span>Home</span>
+          </a>
+          <a href="#genres" data-nav="explore" onclick="navigateTo('explore', event)" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 transition-all">
+            <i class="fa-solid fa-compass w-5 text-center"></i>
+            <span>Explore</span>
+          </a>
+          <a href="#search" data-nav="search" onclick="focusSearch(event)" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 transition-all">
+            <i class="fa-solid fa-magnifying-glass w-5 text-center"></i>
+            <span>Search</span>
+          </a>
+          <a href="#artists" data-nav="artists" onclick="navigateTo('artists', event)" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 transition-all">
+            <i class="fa-solid fa-microphone-lines w-5 text-center"></i>
+            <span>Artists</span>
+          </a>
+          <a href="#albums" data-nav="albums" onclick="navigateTo('albums', event)" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 transition-all">
+            <i class="fa-solid fa-compact-disc w-5 text-center"></i>
+            <span>Albums</span>
+          </a>
+          <a href="#playlists" data-nav="playlists" onclick="navigateTo('playlists', event)" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 transition-all">
+            <i class="fa-solid fa-list-ul w-5 text-center"></i>
+            <span>Playlists</span>
+          </a>
+        </nav>
+      </div>
+
+      <!-- Personal Library Navigation -->
+      <div>
+        <p class="px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-2">Personal</p>
+        <nav class="space-y-1">
+          <a href="#recently-played" data-nav="recent" onclick="navigateTo('recent', event)" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 transition-all">
+            <i class="fa-solid fa-clock-rotate-left w-5 text-center"></i>
+            <span>Recently Played</span>
+          </a>
+          <a href="#popular-tracks" data-nav="favorites" onclick="filterFavorites(event)" class="nav-item flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 transition-all">
+            <span class="flex items-center gap-3.5">
+              <i class="fa-solid fa-heart w-5 text-center text-melody-neon"></i>
+              <span>Favorites</span>
+            </span>
+            <span id="fav-count-badge" class="text-xs px-2 py-0.5 rounded-full bg-melody-purpleLight text-melody-neonBright font-semibold">2</span>
+          </a>
+          <a href="#playlists" data-nav="library" onclick="navigateTo('library', event)" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 transition-all">
+            <i class="fa-solid fa-layer-group w-5 text-center"></i>
+            <span>My Library</span>
+          </a>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Bottom Sidebar Promo Card -->
+    <div class="p-4 m-3 rounded-2xl bg-gradient-to-br from-melody-purpleLight to-[#140e24] border border-white/10">
+      <div class="flex items-center gap-2 text-melody-neonBright text-xs font-bold mb-1">
+        <i class="fa-solid fa-sparkles"></i>
+        <span>MELODY LOSSLESS</span>
+      </div>
+      <p class="text-xs text-gray-300 leading-relaxed mb-3">Stream spatial audio & curated 2026 hits anywhere.</p>
+      <button onclick="playRandomTrack()" class="w-full py-2 px-3 rounded-xl bg-melody-neon hover:bg-melody-neonBright text-melody-black font-bold text-xs transition-all shadow-md">
+        <i class="fa-solid fa-shuffle mr-1.5"></i> Surprise Mix
+      </button>
+    </div>
+  </aside>
+
+  <!-- ==================== MAIN CONTENT AREA ==================== -->
+  <div class="lg:pl-64 flex flex-col min-h-screen">
+
+    <!-- Sticky Top Header Bar -->
+    <header class="sticky top-0 z-30 bg-[#0a0a0c]/80 backdrop-blur-xl border-b border-white/5 px-4 sm:px-8 py-3.5">
+      <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        <!-- Mobile Hamburger & Brand -->
+        <div class="flex items-center gap-3 lg:hidden">
+          <button onclick="toggleMobileSidebar(true)" aria-label="Open Navigation" class="p-2.5 rounded-xl bg-melody-purpleLight text-white hover:text-melody-neonBright border border-white/10">
+            <i class="fa-solid fa-bars text-lg"></i>
+          </button>
+          <span class="font-display font-extrabold text-xl tracking-tight text-white flex items-center gap-2">
+            <i class="fa-solid fa-wave-square text-melody-neonBright"></i> Melody
+          </span>
+        </div>
+
+        <!-- Live Search Bar -->
+        <div class="relative flex-1 max-w-xl">
+          <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+          <input
+            id="global-search"
+            type="text"
+            placeholder="Search songs, artists, albums, or genres..."
+            oninput="handleSearch(this.value)"
+            class="w-full pl-11 pr-10 py-2.5 rounded-full bg-melody-purple/90 border border-white/10 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-melody-neon focus:ring-2 focus:ring-melody-neon/25 transition-all"
+          />
+          <button id="clear-search-btn" onclick="clearSearch()" class="hidden absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-xs">
+            <i class="fa-solid fa-circle-xmark"></i>
+          </button>
+        </div>
+
+        <!-- User Quick Controls -->
+        <div class="hidden sm:flex items-center gap-3">
+          <button onclick="filterFavorites(event)" class="px-3.5 py-2 rounded-full bg-melody-purpleLight/80 hover:bg-melody-purpleLight border border-white/10 text-xs font-semibold text-gray-200 hover:text-melody-neonBright transition-all flex items-center gap-2">
+            <i class="fa-solid fa-heart text-melody-neon"></i>
+            <span>Liked Songs</span>
+          </button>
+          <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-melody-purpleLight to-melody-neon p-[2px]">
+            <div class="w-full h-full rounded-full bg-melody-black flex items-center justify-center text-xs font-bold text-melody-neonBright">
+              M
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 pt-6 space-y-12">
+
+      <!-- Active Filter Banner (Shown when searching or filtering by genre/artist/favorites) -->
+      <div id="active-filter-banner" class="hidden items-center justify-between gap-4 px-5 py-3.5 rounded-2xl bg-melody-purpleLight/90 border border-melody-neon/40">
+        <div class="flex items-center gap-3">
+          <span class="w-2.5 h-2.5 rounded-full bg-melody-neonBright animate-pulse"></span>
+          <p id="active-filter-text" class="text-sm font-medium text-white">Showing filtered results</p>
+        </div>
+        <button onclick="resetAllFilters()" class="px-3.5 py-1.5 rounded-full bg-melody-neon text-melody-black text-xs font-bold hover:bg-melody-neonBright transition-colors">
+          Show All Music
+        </button>
+      </div>
+
+      <!-- ==================== A. WELCOME HERO SECTION ==================== -->
+      <section id="home" class="relative overflow-hidden rounded-3xl border border-white/10 shadow-2xl">
+        <!-- High-Res Concert Background Image with Fallback -->
+        <img
+          src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1600&q=80"
+          onerror="this.src='https://placehold.co/1600x600/24193c/00ff88?text=Melody+Live+Concert'"
+          alt="Live Concert Crowd and Neon Lights"
+          class="absolute inset-0 w-full h-full object-cover object-center scale-105"
+        />
+        <!-- Dark Purple & Neon Gradient Overlay -->
+        <div class="absolute inset-0 bg-gradient-to-r from-[#0a0a0c] via-[#181226]/90 to-[#24193c]/65"></div>
+        <div class="absolute -bottom-24 -right-24 w-80 h-80 bg-melody-neon/20 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="relative z-10 px-6 py-12 sm:px-12 sm:py-16 lg:py-20 max-w-2xl">
+          <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-melody-neonBright text-xs font-semibold tracking-wide mb-5">
+            <i class="fa-solid fa-fire"></i> FEATURED PREMIERE • 2026 EDITION
+          </span>
+          <h1 class="font-display font-extrabold text-3xl sm:text-5xl lg:text-[52px] text-white leading-[1.12] tracking-tight mb-4">
+            Feel the Music, Live the Moment 🎧
+          </h1>
+          <p class="text-gray-300 text-base sm:text-lg leading-relaxed mb-8 max-w-xl">
+            Discover your favourite music and explore new sounds. Stream chart-topping global anthems, soulful melodies, and curated playlists in crystal-clear quality.
+          </p>
+          <div class="flex flex-wrap items-center gap-4">
+            <a href="#popular-tracks" onclick="scrollToSection('popular-tracks', event)" class="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-gradient-to-r from-melody-neon to-melody-neonBright text-melody-black font-bold text-sm sm:text-base shadow-lg neon-glow hover:scale-105 transition-transform">
+              <i class="fa-solid fa-play"></i>
+              <span>Explore Music</span>
+            </a>
+            <button onclick="playTrackByIndex(0)" class="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-white/10 hover:bg-white/15 backdrop-blur-md border border-white/15 text-white font-semibold text-sm sm:text-base transition-all">
+              <i class="fa-solid fa-headphones text-melody-neonBright"></i>
+              <span>Play Top Hit</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== B. FEATURED ARTISTS ==================== -->
+      <section id="artists" class="scroll-mt-24">
+        <div class="flex items-end justify-between mb-6">
+          <div>
+            <h2 class="font-display font-bold text-2xl sm:text-3xl text-white tracking-tight">Featured Artists</h2>
+            <p class="text-sm text-gray-400 mt-1">Tap an artist to filter their signature tracks</p>
+          </div>
+          <button onclick="resetAllFilters()" class="text-xs font-semibold text-melody-neon hover:text-melody-neonBright transition-colors">
+            View All
+          </button>
+        </div>
+
+        <div id="artists-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-5">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </section>
+
+      <!-- ==================== C. POPULAR ALBUMS ==================== -->
+      <section id="albums" class="scroll-mt-24">
+        <div class="flex items-end justify-between mb-6">
+          <div>
+            <h2 class="font-display font-bold text-2xl sm:text-3xl text-white tracking-tight">Popular Albums</h2>
+            <p class="text-sm text-gray-400 mt-1">Iconic records & fresh 2026 studio releases</p>
+          </div>
+        </div>
+
+        <div id="albums-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </section>
+
+      <!-- ==================== D. TRENDING PLAYLISTS ==================== -->
+      <section id="playlists" class="scroll-mt-24">
+        <div class="flex items-end justify-between mb-6">
+          <div>
+            <h2 class="font-display font-bold text-2xl sm:text-3xl text-white tracking-tight">Trending Playlists</h2>
+            <p class="text-sm text-gray-400 mt-1">Handcrafted moods for every hour of your day</p>
+          </div>
+        </div>
+
+        <div id="playlists-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </section>
+
+      <!-- ==================== E. RECENTLY PLAYED ==================== -->
+      <section id="recently-played" class="scroll-mt-24">
+        <div class="flex items-end justify-between mb-6">
+          <div>
+            <h2 class="font-display font-bold text-2xl sm:text-3xl text-white tracking-tight">Recently Played</h2>
+            <p class="text-sm text-gray-400 mt-1">Jump right back into your latest listening session</p>
+          </div>
+        </div>
+
+        <div id="recently-played-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </section>
+
+      <!-- ==================== F. POPULAR TRACKS TABLE ==================== -->
+      <section id="popular-tracks" class="scroll-mt-24">
+        <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+          <div>
+            <h2 class="font-display font-bold text-2xl sm:text-3xl text-white tracking-tight">Popular Tracks</h2>
+            <p class="text-sm text-gray-400 mt-1">Click any song to start instant playback</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="playTrackByIndex(0)" class="px-4 py-2 rounded-full bg-melody-neon hover:bg-melody-neonBright text-melody-black font-bold text-xs transition-all flex items-center gap-2">
+              <i class="fa-solid fa-play"></i> Play All
+            </button>
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-melody-purple/70 border border-white/10 overflow-hidden shadow-xl">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-white/10 text-[11px] uppercase tracking-wider text-gray-400 bg-black/25">
+                  <th class="py-3.5 pl-4 pr-2 w-12 text-center">#</th>
+                  <th class="py-3.5 px-3">Track</th>
+                  <th class="py-3.5 px-3 hidden md:table-cell">Artist</th>
+                  <th class="py-3.5 px-3 hidden lg:table-cell">Album</th>
+                  <th class="py-3.5 px-3 text-right">Duration</th>
+                  <th class="py-3.5 pl-2 pr-4 text-center w-24">Action</th>
+                </tr>
+              </thead>
+              <tbody id="tracks-table-body" class="divide-y divide-white/5 text-sm">
+                <!-- Populated dynamically via JS -->
+              </tbody>
+            </table>
+          </div>
+          <!-- Empty Search State -->
+          <div id="no-tracks-message" class="hidden py-12 px-4 text-center">
+            <i class="fa-solid fa-music text-3xl text-gray-600 mb-3"></i>
+            <p class="text-gray-300 font-medium">No matching tracks found.</p>
+            <button onclick="resetAllFilters()" class="mt-3 px-4 py-2 rounded-full bg-melody-purpleLight text-melody-neonBright text-xs font-semibold hover:bg-white/10">
+              Reset Search & Filters
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== G. MUSIC GENRES ==================== -->
+      <section id="genres" class="scroll-mt-24">
+        <div class="flex items-end justify-between mb-6">
+          <div>
+            <h2 class="font-display font-bold text-2xl sm:text-3xl text-white tracking-tight">Music Genres</h2>
+            <p class="text-sm text-gray-400 mt-1">Explore sounds by style and rhythm</p>
+          </div>
+        </div>
+
+        <div id="genres-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </section>
+
+      <!-- ==================== FOOTER SECTION ==================== -->
+      <footer class="pt-10 pb-6 border-t border-white/10 text-gray-400">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+          <!-- Brand & Tagline -->
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-melody-neon flex items-center justify-center text-melody-black">
+              <i class="fa-solid fa-wave-square text-sm"></i>
+            </div>
+            <span class="font-display font-bold text-lg text-white">Melody</span>
+          </div>
+
+          <!-- Footer Navigation Links -->
+          <div class="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs sm:text-sm font-medium">
+            <a href="#home" onclick="showInfoToast('Melody: Next-gen lossless music streaming built for music lovers.')" class="hover:text-melody-neonBright transition-colors">About Melody</a>
+            <a href="#home" onclick="showInfoToast('Reach us anytime at support@melodymusic.com')" class="hover:text-melody-neonBright transition-colors">Contact Us</a>
+            <a href="#home" onclick="showInfoToast('Your listening privacy is protected with end-to-end encryption.')" class="hover:text-melody-neonBright transition-colors">Privacy Policy</a>
+            <a href="#home" onclick="showInfoToast('Terms & Conditions: Personal & non-commercial streaming use.')" class="hover:text-melody-neonBright transition-colors">Terms and Conditions</a>
+          </div>
+
+          <!-- Social Media Icons -->
+          <div class="flex items-center gap-3">
+            <a href="#home" onclick="event.preventDefault()" aria-label="Instagram" class="w-9 h-9 rounded-full bg-melody-purpleLight hover:bg-melody-neon hover:text-melody-black flex items-center justify-center transition-all">
+              <i class="fa-brands fa-instagram"></i>
+            </a>
+            <a href="#home" onclick="event.preventDefault()" aria-label="X Twitter" class="w-9 h-9 rounded-full bg-melody-purpleLight hover:bg-melody-neon hover:text-melody-black flex items-center justify-center transition-all">
+              <i class="fa-brands fa-x-twitter"></i>
+            </a>
+            <a href="#home" onclick="event.preventDefault()" aria-label="YouTube" class="w-9 h-9 rounded-full bg-melody-purpleLight hover:bg-melody-neon hover:text-melody-black flex items-center justify-center transition-all">
+              <i class="fa-brands fa-youtube"></i>
+            </a>
+            <a href="#home" onclick="event.preventDefault()" aria-label="Spotify" class="w-9 h-9 rounded-full bg-melody-purpleLight hover:bg-melody-neon hover:text-melody-black flex items-center justify-center transition-all">
+              <i class="fa-brands fa-spotify"></i>
+            </a>
+          </div>
+        </div>
+
+        <div class="mt-6 text-center text-xs text-gray-500">
+          © 2026 Melody Music. All Rights Reserved.
+        </div>
+      </footer>
+
+    </main>
+  </div>
+
+  <!-- ==================== FIXED BOTTOM MUSIC PLAYER ==================== -->
+  <div id="music-player" class="fixed bottom-0 left-0 right-0 z-50 bg-[#100d1a]/95 backdrop-blur-2xl border-t border-white/10 px-3 sm:px-6 py-2.5 sm:py-3 shadow-[0_-10px_35px_rgba(0,0,0,0.85)]">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2.5 md:gap-6">
+
+      <!-- 1. Left: Current Song Info -->
+      <div class="flex items-center justify-between w-full md:w-[30%] min-w-0">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden flex-shrink-0 border border-white/15 shadow-md">
+            <img
+              id="player-thumb"
+              src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=300&q=80"
+              onerror="this.src='https://placehold.co/200x200/24193c/00ff88?text=Melody'"
+              alt="Now Playing Cover"
+              class="w-full h-full object-cover"
+            />
+          </div>
+          <div class="min-w-0">
+            <h4 id="player-title" class="font-display font-bold text-sm sm:text-base text-white truncate">Midnight Neon Pulse</h4>
+            <p id="player-artist" class="text-xs text-gray-400 truncate">The Weeknd</p>
+          </div>
+        </div>
+
+        <!-- Like Button on Player -->
+        <button id="player-fav-btn" onclick="toggleCurrentFavorite()" aria-label="Favorite Track" class="p-2 text-gray-400 hover:text-melody-neonBright transition-colors">
+          <i class="fa-regular fa-heart text-base"></i>
+        </button>
+      </div>
+
+      <!-- 2. Center: Transport Controls & Interactive Progress Bar -->
+      <div class="flex flex-col items-center w-full md:w-[42%] max-w-xl">
+        <!-- Buttons Row -->
+        <div class="flex items-center gap-4 sm:gap-6 mb-1.5">
+          <button id="shuffle-btn" onclick="toggleShuffle()" title="Shuffle" aria-label="Shuffle" class="text-gray-400 hover:text-white transition-colors text-xs sm:text-sm">
+            <i class="fa-solid fa-shuffle"></i>
+          </button>
+          <button onclick="prevTrack()" title="Previous" aria-label="Previous Track" class="text-gray-200 hover:text-melody-neonBright transition-colors text-base sm:text-lg">
+            <i class="fa-solid fa-backward-step"></i>
+          </button>
+          <button id="play-pause-btn" onclick="togglePlayPause()" title="Play / Pause" aria-label="Play or Pause" class="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-gradient-to-r from-melody-neon to-melody-neonBright text-melody-black flex items-center justify-center shadow-lg neon-glow-sm hover:scale-105 transition-transform">
+            <i id="play-pause-icon" class="fa-solid fa-play text-sm sm:text-base ml-0.5"></i>
+          </button>
+          <button onclick="nextTrack()" title="Next" aria-label="Next Track" class="text-gray-200 hover:text-melody-neonBright transition-colors text-base sm:text-lg">
+            <i class="fa-solid fa-forward-step"></i>
+          </button>
+          <button id="repeat-btn" onclick="toggleRepeat()" title="Repeat" aria-label="Repeat" class="text-gray-400 hover:text-white transition-colors text-xs sm:text-sm">
+            <i class="fa-solid fa-repeat"></i>
+          </button>
+        </div>
+
+        <!-- Progress Bar & Timestamps -->
+        <div class="w-full flex items-center gap-2.5 text-[11px] font-medium text-gray-400">
+          <span id="current-time" class="w-9 text-right tabular-nums">0:00</span>
+          <input
+            id="progress-bar"
+            type="range"
+            min="0"
+            max="100"
+            value="0"
+            step="0.1"
+            oninput="seekTrack(this.value)"
+            aria-label="Seek Track Progress"
+            class="melody-range flex-1 h-1.5 rounded-full bg-white/15"
+          />
+          <span id="total-duration" class="w-9 tabular-nums">3:24</span>
+        </div>
+      </div>
+
+      <!-- 3. Right: Volume Control -->
+      <div class="hidden md:flex items-center justify-end gap-3 w-[28%]">
+        <span id="audio-mode-badge" class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-white/5 text-gray-400 border border-white/10">HQ Audio</span>
+        <button id="mute-btn" onclick="toggleMute()" aria-label="Mute or Unmute" class="text-gray-300 hover:text-melody-neonBright transition-colors w-6 text-center">
+          <i id="volume-icon" class="fa-solid fa-volume-high text-sm"></i>
+        </button>
+        <input
+          id="volume-slider"
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          value="0.8"
+          oninput="setVolume(this.value)"
+          aria-label="Volume Control"
+          class="melody-range w-24 h-1.5 rounded-full bg-white/15"
+        />
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Hidden HTML5 Audio Element -->
+  <audio id="audio-engine" crossorigin="anonymous" preload="metadata"></audio>
+
+  <!-- ==================== JAVASCRIPT APPLICATION LOGIC ==================== -->
+  <script>
+    /* ==========================================================================
+       1. CURATED DATA CATALOG (Artists, Albums, Playlists, Genres, Tracks)
+       ========================================================================== */
+    const ARTISTS = [
+      {
+        id: 'arijit',
+        name: 'Arijit Singh',
+        genre: 'Romantic • Indian Music',
+        image: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=500&q=80'
+      },
+      {
+        id: 'taylor',
+        name: 'Taylor Swift',
+        genre: 'Pop • Indie Folk',
+        image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=500&q=80'
+      },
+      {
+        id: 'ed',
+        name: 'Ed Sheeran',
+        genre: 'Pop • Acoustic',
+        image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=500&q=80'
+      },
+      {
+        id: 'anirudh',
+        name: 'Anirudh Ravichander',
+        genre: 'Indian Music • Electronic',
+        image: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=500&q=80'
+      },
+      {
+        id: 'shreya',
+        name: 'Shreya Ghoshal',
+        genre: 'Classical • Romantic',
+        image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=500&q=80'
+      },
+      {
+        id: 'weeknd',
+        name: 'The Weeknd',
+        genre: 'Electronic • Hip-Hop',
+        image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=500&q=80'
+      }
+    ];
+
+    const ALBUMS = [
+      {
+        title: 'After Hours Horizon',
+        artist: 'The Weeknd',
+        year: '2026',
+        cover: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?auto=format&fit=crop&w=600&q=80',
+        trackIndex: 0
+      },
+      {
+        title: 'Soulful Raagas',
+        artist: 'Arijit Singh',
+        year: '2025',
+        cover: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=600&q=80',
+        trackIndex: 1
+      },
+      {
+        title: 'Midnight Echoes',
+        artist: 'Taylor Swift',
+        year: '2026',
+        cover: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=600&q=80',
+        trackIndex: 2
+      },
+      {
+        title: 'Devara Beats',
+        artist: 'Anirudh Ravichander',
+        year: '2025',
+        cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=600&q=80',
+        trackIndex: 3
+      }
+    ];
+
+    const PLAYLISTS = [
+      {
+        title: 'Top Hits 2026',
+        subtitle: 'The hottest global tracks dominating charts right now.',
+        tracksCount: '50 Songs',
+        badge: 'HOT',
+        cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=600&q=80',
+        trackIndex: 0
+      },
+      {
+        title: 'Romantic Melodies',
+        subtitle: 'Heartfelt vocals and warm acoustic harmonies.',
+        tracksCount: '38 Songs',
+        badge: 'LOVE',
+        cover: 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&w=600&q=80',
+        trackIndex: 1
+      },
+      {
+        title: 'Relaxing Music',
+        subtitle: 'Ambient lo-fi, soft piano & late-night calm.',
+        tracksCount: '42 Songs',
+        badge: 'CHILL',
+        cover: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80',
+        trackIndex: 5
+      },
+      {
+        title: 'Workout Beats',
+        subtitle: 'High-energy bass drops to fuel your training.',
+        tracksCount: '35 Songs',
+        badge: 'ENERGY',
+        cover: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=600&q=80',
+        trackIndex: 7
+      },
+      {
+        title: 'Classical Vibes',
+        subtitle: 'Timeless symphonies & Indian classical fusion.',
+        tracksCount: '29 Songs',
+        badge: 'PURE',
+        cover: 'https://images.unsplash.com/photo-1507838153414-b4b713384a76?auto=format&fit=crop&w=600&q=80',
+        trackIndex: 4
+      },
+      {
+        title: 'Trending Telugu Songs',
+        subtitle: 'Tollywood chartbusters & mass celebration anthems.',
+        tracksCount: '45 Songs',
+        badge: 'TRENDING',
+        cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80',
+        trackIndex: 3
+      }
+    ];
+
+    const GENRES = [
+      { name: 'Pop', gradient: 'from-pink-600 to-purple-800', icon: 'fa-star' },
+      { name: 'Rock', gradient: 'from-red-600 to-zinc-900', icon: 'fa-guitar' },
+      { name: 'Hip-Hop', gradient: 'from-amber-500 to-orange-800', icon: 'fa-compact-disc' },
+      { name: 'Classical', gradient: 'from-emerald-600 to-teal-900', icon: 'fa-violin' },
+      { name: 'Jazz', gradient: 'from-indigo-500 to-blue-900', icon: 'fa-saxophone' },
+      { name: 'Romantic', gradient: 'from-rose-500 to-pink-900', icon: 'fa-heart' },
+      { name: 'Electronic', gradient: 'from-cyan-500 to-violet-900', icon: 'fa-bolt' },
+      { name: 'Indian Music', gradient: 'from-purple-600 to-emerald-700', icon: 'fa-drum' }
+    ];
+
+    /* Royalty-free reliable audio streams (SoundHelix) + Web Audio Synth fallback */
+    const TRACKS = [
+      {
+        id: 1,
+        title: 'Midnight Neon Pulse',
+        artist: 'The Weeknd',
+        album: 'After Hours Horizon',
+        genre: 'Electronic',
+        durationSec: 204,
+        cover: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?auto=format&fit=crop&w=300&q=80',
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+        freq: 261.63
+      },
+      {
+        id: 2,
+        title: 'Kesariya Chandni',
+        artist: 'Arijit Singh',
+        album: 'Soulful Raagas',
+        genre: 'Romantic',
+        durationSec: 248,
+        cover: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=300&q=80',
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+        freq: 293.66
+      },
+      {
+        id: 3,
+        title: 'Lavender Skyline',
+        artist: 'Taylor Swift',
+        album: 'Midnight Echoes',
+        genre: 'Pop',
+        durationSec: 215,
+        cover: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=300&q=80',
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+        freq: 329.63
+      },
+      {
+        id: 4,
+        title: 'Chuttamalle Thunder',
+        artist: 'Anirudh Ravichander',
+        album: 'Devara Beats',
+        genre: 'Indian Music',
+        durationSec: 222,
+        cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=300&q=80',
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
+        freq: 349.23
+      },
+      {
+        id: 5,
+        title: 'Velvet Monsoon Raga',
+        artist: 'Shreya Ghoshal',
+        album: 'Classical Vibes',
+        genre: 'Classical',
+        durationSec: 264,
+        cover: 'https://images.unsplash.com/photo-1507838153414-b4b713384a76?auto=format&fit=crop&w=300&q=80',
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3',
+        freq: 392.00
+      },
+      {
+        id: 6,
+        title: 'Autumn Acoustic Breeze',
+        artist: 'Ed Sheeran',
+        album: 'Subtract Sessions',
+        genre: 'Pop',
+        durationSec: 196,
+        cover: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=300&q=80',
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3',
+        freq: 440.00
+      },
+      {
+        id: 7,
+        title: 'Blue Note Saxophone',
+        artist: 'Miles & Co.',
+        album: 'Midnight Jazz Club',
+        genre: 'Jazz',
+        durationSec: 230,
+        cover: 'https://images.unsplash.com/photo-1511192336575-5a79af67a629?auto=format&fit=crop&w=300&q=80',
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3',
+        freq: 493.88
+      },
+      {
+        id: 8,
+        title: 'Electric Arena Riff',
+        artist: 'Crimson Volt',
+        album: 'Overdrive 2026',
+        genre: 'Rock',
+        durationSec: 210,
+        cover: 'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?auto=format&fit=crop&w=300&q=80',
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3',
+        freq: 523.25
+      },
+      {
+        id: 9,
+        title: '808 Street Crown',
+        artist: 'Metro Flow',
+        album: 'Neon Cypher',
+        genre: 'Hip-Hop',
+        durationSec: 188,
+        cover: 'https://images.unsplash.com/photo-1571609803939-54f463c5ce1c?auto=format&fit=crop&w=300&q=80',
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3',
+        freq: 277.18
+      }
+    ];
+
+    /* ==========================================================================
+       2. APPLICATION STATE
+       ========================================================================== */
+    let currentTrackIndex = 0;
+    let isPlaying = false;
+    let isShuffle = false;
+    let isRepeat = false;
+    let favorites = new Set([1, 2]); // Default liked tracks
+    let recentlyPlayedIds = [1, 2, 4, 3];
+    let activeFilter = { type: 'all', value: '' };
+
+    // Audio & Web Audio Fallback State
+    const audioEl = document.getElementById('audio-engine');
+    let usingSynthFallback = false;
+    let synthInterval = null;
+    let synthCurrentSec = 0;
+    let audioCtx = null;
+
+    /* ==========================================================================
+       3. INITIALIZATION & RENDERING
+       ========================================================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+      renderArtists();
+      renderAlbums();
+      renderPlaylists();
+      renderRecentlyPlayed();
+      renderTracksTable();
+      renderGenres();
+      loadTrackMetadata(currentTrackIndex);
+      updateVolumeSliderVisual(0.8);
+      updateProgressSliderVisual(0);
+    });
+
+    function formatTime(seconds) {
+      if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+
+    function renderArtists() {
+      const container = document.getElementById('artists-grid');
+      container.innerHTML = ARTISTS.map(artist => `
+        <div onclick="filterByArtist('${artist.name.replace(/'/g, "\\'")}')" class="card-hover group cursor-pointer p-4 rounded-2xl bg-melody-purple/70 hover:bg-melody-purpleLight border border-white/10 text-center">
+          <div class="relative w-24 h-24 sm:w-28 sm:h-28 mx-auto mb-3.5 rounded-full p-1 bg-gradient-to-tr from-melody-purpleLight via-melody-neon/50 to-melody-neonBright">
+            <img
+              src="${artist.image}"
+              onerror="this.src='https://placehold.co/300x300/24193c/00ff88?text=${encodeURIComponent(artist.name[0])}'"
+              alt="${artist.name}"
+              class="w-full h-full object-cover rounded-full"
+            />
+            <span class="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-melody-neon text-melody-black flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all">
+              <i class="fa-solid fa-play text-xs ml-0.5"></i>
+            </span>
+          </div>
+          <h3 class="font-display font-bold text-sm sm:text-base text-white truncate group-hover:text-melody-neonBright transition-colors">${artist.name}</h3>
+          <p class="text-xs text-gray-400 truncate mt-0.5">${artist.genre}</p>
+        </div>
+      `).join('');
+    }
+
+    function renderAlbums() {
+      const container = document.getElementById('albums-grid');
+      container.innerHTML = ALBUMS.map(album => `
+        <div onclick="playTrackByIndex(${album.trackIndex})" class="card-hover group cursor-pointer p-4 rounded-2xl bg-melody-purple/75 hover:bg-melody-purpleLight border border-white/10">
+          <div class="relative aspect-square rounded-xl overflow-hidden mb-3.5 shadow-lg">
+            <img
+              src="${album.cover}"
+              onerror="this.src='https://placehold.co/400x400/24193c/00ff88?text=Album'"
+              alt="${album.title}"
+              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+            <button aria-label="Play ${album.title}" class="absolute bottom-3 right-3 w-11 h-11 rounded-full bg-melody-neon text-melody-black flex items-center justify-center shadow-xl neon-glow opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all">
+              <i class="fa-solid fa-play text-sm ml-0.5"></i>
+            </button>
+          </div>
+          <h3 class="font-display font-bold text-base text-white truncate">${album.title}</h3>
+          <div class="flex items-center justify-between text-xs text-gray-400 mt-1">
+            <span class="truncate">${album.artist}</span>
+            <span class="px-2 py-0.5 rounded bg-white/5 text-gray-300 font-medium">${album.year}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderPlaylists() {
+      const container = document.getElementById('playlists-grid');
+      container.innerHTML = PLAYLISTS.map(pl => `
+        <div onclick="playTrackByIndex(${pl.trackIndex})" class="card-hover group cursor-pointer flex items-center gap-4 p-3.5 rounded-2xl bg-melody-purple/75 hover:bg-melody-purpleLight border border-white/10">
+          <div class="relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden flex-shrink-0 shadow-md">
+            <img
+              src="${pl.cover}"
+              onerror="this.src='https://placehold.co/300x300/24193c/00ff88?text=Playlist'"
+              alt="${pl.title}"
+              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+            <div class="absolute inset-0 bg-black/35 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <span class="w-9 h-9 rounded-full bg-melody-neon text-melody-black flex items-center justify-center shadow-lg">
+                <i class="fa-solid fa-play text-xs ml-0.5"></i>
+              </span>
+            </div>
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-melody-neon/15 text-melody-neonBright border border-melody-neon/30">${pl.badge}</span>
+              <span class="text-[11px] text-gray-400">${pl.tracksCount}</span>
+            </div>
+            <h3 class="font-display font-bold text-base text-white truncate group-hover:text-melody-neonBright transition-colors">${pl.title}</h3>
+            <p class="text-xs text-gray-400 line-clamp-2 mt-0.5">${pl.subtitle}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderRecentlyPlayed() {
+      const container = document.getElementById('recently-played-grid');
+      const items = recentlyPlayedIds
+        .map(id => TRACKS.find(t => t.id === id))
+        .filter(Boolean)
+        .slice(0, 4);
+
+      container.innerHTML = items.map(track => {
+        const idx = TRACKS.findIndex(t => t.id === track.id);
+        const active = idx === currentTrackIndex;
+        return `
+          <div onclick="playTrackByIndex(${idx})" class="group cursor-pointer flex items-center justify-between gap-3 p-3 rounded-2xl bg-melody-purple/60 hover:bg-melody-purpleLight border ${active ? 'border-melody-neon/50' : 'border-white/10'} transition-all">
+            <div class="flex items-center gap-3.5 min-w-0">
+              <img
+                src="${track.cover}"
+                onerror="this.src='https://placehold.co/150x150/24193c/00ff88?text=Track'"
+                alt="${track.title}"
+                class="w-12 h-12 rounded-xl object-cover flex-shrink-0"
+              />
+              <div class="min-w-0">
+                <h4 class="font-semibold text-sm ${active ? 'text-melody-neonBright' : 'text-white'} truncate">${track.title}</h4>
+                <p class="text-xs text-gray-400 truncate">${track.artist}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 flex-shrink-0">
+              <span class="text-xs text-gray-400 tabular-nums">${formatTime(track.durationSec)}</span>
+              <button aria-label="Play ${track.title}" class="w-9 h-9 rounded-full ${active && isPlaying ? 'bg-melody-neon text-melody-black' : 'bg-white/10 text-white group-hover:bg-melody-neon group-hover:text-melody-black'} flex items-center justify-center transition-colors">
+                <i class="fa-solid ${active && isPlaying ? 'fa-pause' : 'fa-play'} text-xs"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderTracksTable() {
+      const tbody = document.getElementById('tracks-table-body');
+      const emptyMsg = document.getElementById('no-tracks-message');
+
+      const filtered = TRACKS.map((track, originalIndex) => ({ track, originalIndex }))
+        .filter(({ track }) => {
+          if (activeFilter.type === 'search' && activeFilter.value) {
+            const q = activeFilter.value.toLowerCase();
+            return (
+              track.title.toLowerCase().includes(q) ||
+              track.artist.toLowerCase().includes(q) ||
+              track.album.toLowerCase().includes(q) ||
+              track.genre.toLowerCase().includes(q)
+            );
+          }
+          if (activeFilter.type === 'artist') {
+            return track.artist.toLowerCase().includes(activeFilter.value.toLowerCase());
+          }
+          if (activeFilter.type === 'genre') {
+            return track.genre.toLowerCase() === activeFilter.value.toLowerCase();
+          }
+          if (activeFilter.type === 'favorites') {
+            return favorites.has(track.id);
+          }
+          return true;
+        });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        emptyMsg.classList.remove('hidden');
+        return;
+      }
+
+      emptyMsg.classList.add('hidden');
+      tbody.innerHTML = filtered.map(({ track, originalIndex }, displayIdx) => {
+        const isCurrent = originalIndex === currentTrackIndex;
+        const isFav = favorites.has(track.id);
+
+        return `
+          <tr onclick="playTrackByIndex(${originalIndex})" class="group cursor-pointer hover:bg-white/[0.06] ${isCurrent ? 'bg-melody-purpleLight/70' : ''} transition-colors">
+            <!-- Song Number or Animated Equalizer -->
+            <td class="py-3.5 pl-4 pr-2 text-center font-medium text-gray-400">
+              ${isCurrent ? `
+                <div class="inline-flex items-end justify-center gap-0.5 h-4 ${isPlaying ? '' : 'eq-paused'}">
+                  <span class="eq-bar"></span>
+                  <span class="eq-bar"></span>
+                  <span class="eq-bar"></span>
+                </div>
+              ` : `<span class="group-hover:hidden">${displayIdx + 1}</span><i class="fa-solid fa-play hidden group-hover:inline text-melody-neonBright text-xs"></i>`}
+            </td>
+
+            <!-- Song Image & Name -->
+            <td class="py-3.5 px-3">
+              <div class="flex items-center gap-3 min-w-0">
+                <img
+                  src="${track.cover}"
+                  onerror="this.src='https://placehold.co/120x120/24193c/00ff88?text=Song'"
+                  alt="${track.title}"
+                  class="w-11 h-11 rounded-lg object-cover flex-shrink-0 border border-white/10"
+                />
+                <div class="min-w-0">
+                  <div class="font-semibold ${isCurrent ? 'text-melody-neonBright' : 'text-white'} truncate">${track.title}</div>
+                  <div class="text-xs text-gray-400 md:hidden truncate">${track.artist}</div>
+                </div>
+              </div>
+            </td>
+
+            <!-- Artist -->
+            <td class="py-3.5 px-3 text-gray-300 hidden md:table-cell">${track.artist}</td>
+
+            <!-- Album -->
+            <td class="py-3.5 px-3 text-gray-400 hidden lg:table-cell">${track.album}</td>
+
+            <!-- Duration -->
+            <td class="py-3.5 px-3 text-right text-gray-400 tabular-nums">${formatTime(track.durationSec)}</td>
+
+            <!-- Favorite & Play Icons -->
+            <td class="py-3.5 pl-2 pr-4 text-center" onclick="event.stopPropagation()">
+              <div class="inline-flex items-center gap-2">
+                <button onclick="toggleFavoriteById(${track.id})" aria-label="Toggle Favorite" class="p-2 rounded-full hover:bg-white/10 ${isFav ? 'text-melody-neonBright' : 'text-gray-400 hover:text-white'} transition-colors">
+                  <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+                </button>
+                <button onclick="playTrackByIndex(${originalIndex})" aria-label="Play ${track.title}" class="w-8 h-8 rounded-full bg-melody-neon/15 text-melody-neonBright hover:bg-melody-neon hover:text-melody-black flex items-center justify-center transition-colors">
+                  <i class="fa-solid ${isCurrent && isPlaying ? 'fa-pause' : 'fa-play'} text-xs"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderGenres() {
+      const container = document.getElementById('genres-grid');
+      container.innerHTML = GENRES.map(g => `
+        <button onclick="filterByGenre('${g.name}')" class="card-hover group relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br ${g.gradient} text-left border border-white/15 shadow-lg">
+          <div class="relative z-10 flex flex-col justify-between h-20">
+            <span class="w-9 h-9 rounded-xl bg-black/25 backdrop-blur-sm flex items-center justify-center text-white text-sm">
+              <i class="fa-solid ${g.icon}"></i>
+            </span>
+            <span class="font-display font-extrabold text-lg text-white tracking-tight">${g.name}</span>
+          </div>
+          <i class="fa-solid ${g.icon} absolute -bottom-3 -right-3 text-6xl text-white/10 group-hover:scale-110 transition-transform"></i>
+        </button>
+      `).join('');
+    }
+
+    /* ==========================================================================
+       4. AUDIO PLAYBACK ENGINE (HTML5 Audio + Web Audio API Synth Fallback)
+       ========================================================================== */
+    function loadTrackMetadata(index) {
+      const track = TRACKS[index];
+      document.getElementById('player-thumb').src = track.cover;
+      document.getElementById('player-title').textContent = track.title;
+      document.getElementById('player-artist').textContent = track.artist;
+      document.getElementById('total-duration').textContent = formatTime(track.durationSec);
+      document.getElementById('current-time').textContent = '0:00';
+      document.getElementById('progress-bar').value = 0;
+      updateProgressSliderVisual(0);
+      updatePlayerFavoriteIcon();
+    }
+
+    function playTrackByIndex(index) {
+      currentTrackIndex = index;
+      const track = TRACKS[index];
+      loadTrackMetadata(index);
+
+      // Update Recently Played list
+      recentlyPlayedIds = [track.id, ...recentlyPlayedIds.filter(id => id !== track.id)];
+      renderRecentlyPlayed();
+
+      // Stop any previous synth timer
+      stopSynthFallback();
+      usingSynthFallback = false;
+      document.getElementById('audio-mode-badge').textContent = 'HQ Stream';
+
+      audioEl.src = track.audioUrl;
+      audioEl.volume = parseFloat(document.getElementById('volume-slider').value);
+
+      const playPromise = audioEl.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            isPlaying = true;
+            updatePlayPauseUI();
+          })
+          .catch(() => {
+            // If network stream is blocked/offline, seamlessly engage Web Audio ambient synth
+            startSynthFallback(track);
+          });
+      }
+    }
+
+    function startSynthFallback(track) {
+      usingSynthFallback = true;
+      isPlaying = true;
+      synthCurrentSec = 0;
+      document.getElementById('audio-mode-badge').textContent = 'Synth Mode';
+      updatePlayPauseUI();
+
+      // Play a pleasant soft chord pulse via Web Audio API so user hears real sound
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        playWarmChord(track.freq);
+      } catch (e) {
+        // Silent visual timer fallback if AudioContext is restricted
+      }
+
+      synthInterval = setInterval(() => {
+        if (!isPlaying) return;
+        synthCurrentSec += 0.5;
+        const duration = track.durationSec || 180;
+        const pct = Math.min((synthCurrentSec / duration) * 100, 100);
+        document.getElementById('current-time').textContent = formatTime(synthCurrentSec);
+        document.getElementById('progress-bar').value = pct;
+        updateProgressSliderVisual(pct);
+
+        if (Math.floor(synthCurrentSec) % 4 === 0 && synthCurrentSec % 1 === 0) {
+          try { playWarmChord(track.freq); } catch (e) {}
+        }
+
+        if (synthCurrentSec >= duration) {
+          handleTrackEnded();
+        }
+      }, 500);
+    }
+
+    function playWarmChord(baseFreq) {
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const vol = parseFloat(document.getElementById('volume-slider').value) * 0.08;
+      [baseFreq, baseFreq * 1.25, baseFreq * 1.5].forEach(freq => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.exponentialRampToValueAtTime(Math.max(vol, 0.001), now + 0.15);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.8);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 1.85);
+      });
+    }
+
+    function stopSynthFallback() {
+      if (synthInterval) {
+        clearInterval(synthInterval);
+        synthInterval = null;
+      }
+    }
+
+    function togglePlayPause() {
+      if (!audioEl.src && !usingSynthFallback) {
+        playTrackByIndex(currentTrackIndex);
+        return;
+      }
+
+      if (isPlaying) {
+        isPlaying = false;
+        if (!usingSynthFallback) audioEl.pause();
+        updatePlayPauseUI();
+      } else {
+        isPlaying = true;
+        if (!usingSynthFallback) {
+          audioEl.play().catch(() => startSynthFallback(TRACKS[currentTrackIndex]));
+        }
+        updatePlayPauseUI();
+      }
+    }
+
+    function updatePlayPauseUI() {
+      const icon = document.getElementById('play-pause-icon');
+      icon.className = isPlaying
+        ? 'fa-solid fa-pause text-sm sm:text-base'
+        : 'fa-solid fa-play text-sm sm:text-base ml-0.5';
+      renderTracksTable();
+      renderRecentlyPlayed();
+    }
+
+    function nextTrack() {
+      if (isShuffle) {
+        let nextIdx = Math.floor(Math.random() * TRACKS.length);
+        if (nextIdx === currentTrackIndex && TRACKS.length > 1) {
+          nextIdx = (nextIdx + 1) % TRACKS.length;
+        }
+        playTrackByIndex(nextIdx);
+      } else {
+        playTrackByIndex((currentTrackIndex + 1) % TRACKS.length);
+      }
+    }
+
+    function prevTrack() {
+      if (audioEl.currentTime > 4 || synthCurrentSec > 4) {
+        seekTrack(0);
+        return;
+      }
+      const prevIdx = (currentTrackIndex - 1 + TRACKS.length) % TRACKS.length;
+      playTrackByIndex(prevIdx);
+    }
+
+    function playRandomTrack() {
+      const randomIdx = Math.floor(Math.random() * TRACKS.length);
+      playTrackByIndex(randomIdx);
+      showInfoToast(`Playing Surprise Mix: ${TRACKS[randomIdx].title}`);
+    }
+
+    function toggleShuffle() {
+      isShuffle = !isShuffle;
+      const btn = document.getElementById('shuffle-btn');
+      btn.classList.toggle('text-melody-neonBright', isShuffle);
+      btn.classList.toggle('text-gray-400', !isShuffle);
+      showInfoToast(isShuffle ? 'Shuffle enabled' : 'Shuffle disabled');
+    }
+
+    function toggleRepeat() {
+      isRepeat = !isRepeat;
+      const btn = document.getElementById('repeat-btn');
+      btn.classList.toggle('text-melody-neonBright', isRepeat);
+      btn.classList.toggle('text-gray-400', !isRepeat);
+      showInfoToast(isRepeat ? 'Repeat track enabled' : 'Repeat disabled');
+    }
+
+    function handleTrackEnded() {
+      if (isRepeat) {
+        playTrackByIndex(currentTrackIndex);
+      } else {
+        nextTrack();
+      }
+    }
+
+    // HTML5 Audio Event Listeners
+    audioEl.addEventListener('timeupdate', () => {
+      if (usingSynthFallback) return;
+      const duration = audioEl.duration || TRACKS[currentTrackIndex].durationSec;
+      const current = audioEl.currentTime;
+      const pct = duration ? (current / duration) * 100 : 0;
+
+      document.getElementById('current-time').textContent = formatTime(current);
+      document.getElementById('total-duration').textContent = formatTime(duration);
+      document.getElementById('progress-bar').value = pct;
+      updateProgressSliderVisual(pct);
+    });
+
+    audioEl.addEventListener('ended', handleTrackEnded);
+
+    function seekTrack(percentValue) {
+      const pct = parseFloat(percentValue);
+      updateProgressSliderVisual(pct);
+
+      if (usingSynthFallback) {
+        const duration = TRACKS[currentTrackIndex].durationSec;
+        synthCurrentSec = (pct / 100) * duration;
+        document.getElementById('current-time').textContent = formatTime(synthCurrentSec);
+        return;
+      }
+
+      if (audioEl.duration) {
+        audioEl.currentTime = (pct / 100) * audioEl.duration;
+      }
+    }
+
+    function updateProgressSliderVisual(pct) {
+      const slider = document.getElementById('progress-bar');
+      slider.style.background = `linear-gradient(to right, #00ff88 ${pct}%, rgba(255,255,255,0.16) ${pct}%)`;
+    }
+
+    /* ==========================================================================
+       5. VOLUME & FAVORITES CONTROLS
+       ========================================================================== */
+    function setVolume(val) {
+      const vol = parseFloat(val);
+      audioEl.volume = vol;
+      audioEl.muted = vol === 0;
+      updateVolumeSliderVisual(vol);
+    }
+
+    function toggleMute() {
+      const slider = document.getElementById('volume-slider');
+      if (audioEl.muted || parseFloat(slider.value) === 0) {
+        audioEl.muted = false;
+        const restore = parseFloat(slider.dataset.prevVol || '0.8');
+        slider.value = restore;
+        audioEl.volume = restore;
+        updateVolumeSliderVisual(restore);
+      } else {
+        slider.dataset.prevVol = slider.value;
+        audioEl.muted = true;
+        slider.value = 0;
+        updateVolumeSliderVisual(0);
+      }
+    }
+
+    function updateVolumeSliderVisual(vol) {
+      const slider = document.getElementById('volume-slider');
+      const icon = document.getElementById('volume-icon');
+      const pct = vol * 100;
+      slider.style.background = `linear-gradient(to right, #1ed760 ${pct}%, rgba(255,255,255,0.16) ${pct}%)`;
+
+      if (vol === 0) {
+        icon.className = 'fa-solid fa-volume-xmark text-sm text-gray-500';
+      } else if (vol < 0.5) {
+        icon.className = 'fa-solid fa-volume-low text-sm';
+      } else {
+        icon.className = 'fa-solid fa-volume-high text-sm';
+      }
+    }
+
+    function toggleFavoriteById(trackId) {
+      if (favorites.has(trackId)) {
+        favorites.delete(trackId);
+        showInfoToast('Removed from Favorites');
+      } else {
+        favorites.add(trackId);
+        showInfoToast('Added to Favorites ♥');
+      }
+      document.getElementById('fav-count-badge').textContent = favorites.size;
+      updatePlayerFavoriteIcon();
+      renderTracksTable();
+    }
+
+    function toggleCurrentFavorite() {
+      const currentId = TRACKS[currentTrackIndex].id;
+      toggleFavoriteById(currentId);
+    }
+
+    function updatePlayerFavoriteIcon() {
+      const currentId = TRACKS[currentTrackIndex].id;
+      const btn = document.getElementById('player-fav-btn');
+      const isFav = favorites.has(currentId);
+      btn.innerHTML = `<i class="${isFav ? 'fa-solid text-melody-neonBright' : 'fa-regular'} fa-heart text-base"></i>`;
+    }
+
+    /* ==========================================================================
+       6. SEARCH, FILTERING & NAVIGATION
+       ========================================================================== */
+    function handleSearch(query) {
+      const trimmed = query.trim();
+      const clearBtn = document.getElementById('clear-search-btn');
+      clearBtn.classList.toggle('hidden', trimmed.length === 0);
+
+      if (trimmed.length === 0) {
+        resetAllFilters(false);
+        return;
+      }
+
+      activeFilter = { type: 'search', value: trimmed };
+      showFilterBanner(`Search results for "${trimmed}"`);
+      renderTracksTable();
+    }
+
+    function clearSearch() {
+      const input = document.getElementById('global-search');
+      input.value = '';
+      document.getElementById('clear-search-btn').classList.add('hidden');
+      resetAllFilters();
+    }
+
+    function filterByArtist(artistName) {
+      activeFilter = { type: 'artist', value: artistName };
+      showFilterBanner(`Artist Spotlight: ${artistName}`);
+      renderTracksTable();
+      scrollToSection('popular-tracks');
+    }
+
+    function filterByGenre(genreName) {
+      activeFilter = { type: 'genre', value: genreName };
+      showFilterBanner(`Genre Mix: ${genreName}`);
+      renderTracksTable();
+      scrollToSection('popular-tracks');
+    }
+
+    function filterFavorites(e) {
+      if (e) e.preventDefault();
+      toggleMobileSidebar(false);
+      activeFilter = { type: 'favorites', value: 'Liked Songs' };
+      showFilterBanner(`Your Liked Songs (${favorites.size})`);
+      renderTracksTable();
+      scrollToSection('popular-tracks');
+    }
+
+    function resetAllFilters(clearInput = true) {
+      activeFilter = { type: 'all', value: '' };
+      if (clearInput) {
+        document.getElementById('global-search').value = '';
+        document.getElementById('clear-search-btn').classList.add('hidden');
+      }
+      document.getElementById('active-filter-banner').classList.add('hidden');
+      document.getElementById('active-filter-banner').classList.remove('flex');
+      renderTracksTable();
+    }
+
+    function showFilterBanner(label) {
+      const banner = document.getElementById('active-filter-banner');
+      document.getElementById('active-filter-text').textContent = label;
+      banner.classList.remove('hidden');
+      banner.classList.add('flex');
+    }
+
+    function navigateTo(target, e) {
+      if (e) e.preventDefault();
+      toggleMobileSidebar(false);
+
+      // Update active nav link styling
+      document.querySelectorAll('.nav-item').forEach(el => {
+        el.classList.remove('bg-melody-purpleLight', 'text-melody-neonBright', 'border', 'border-melody-neon/30');
+        el.classList.add('text-gray-300');
+      });
+      const activeEl = document.querySelector(`.nav-item[data-nav="${target}"]`);
+      if (activeEl) {
+        activeEl.classList.add('bg-melody-purpleLight', 'text-melody-neonBright', 'border', 'border-melody-neon/30');
+        activeEl.classList.remove('text-gray-300');
+      }
+
+      const sectionMap = {
+        home: 'home',
+        explore: 'genres',
+        artists: 'artists',
+        albums: 'albums',
+        playlists: 'playlists',
+        recent: 'recently-played',
+        library: 'playlists'
+      };
+
+      if (target === 'home') resetAllFilters();
+      scrollToSection(sectionMap[target] || 'home');
+    }
+
+    function focusSearch(e) {
+      if (e) e.preventDefault();
+      toggleMobileSidebar(false);
+      const searchInput = document.getElementById('global-search');
+      searchInput.focus();
+      searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function scrollToSection(id, e) {
+      if (e) e.preventDefault();
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function toggleMobileSidebar(open) {
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('sidebar-backdrop');
+      if (open) {
+        sidebar.classList.remove('-translate-x-full');
+        backdrop.classList.remove('hidden');
+      } else {
+        sidebar.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+      }
+    }
+
+    function showInfoToast(message) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'px-4 py-2.5 rounded-xl bg-melody-purpleLight/95 backdrop-blur-md border border-melody-neon/40 text-white text-xs font-semibold shadow-xl flex items-center gap-2 transition-all duration-300';
+      toast.innerHTML = `<i class="fa-solid fa-circle-check text-melody-neonBright"></i><span>${message}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-6px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 2400);
+    }
+  </script>
+</body>
+</html>
